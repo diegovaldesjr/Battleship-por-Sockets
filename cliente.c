@@ -19,10 +19,6 @@ void cliente(char *argv){
 	
 	char buffer[256];
 	
-	if(argc<3){
-		fprintf(stderr, "usage %s hostnameport\n", argv[0]);
-		exit(0);
-	}
 	//portno = atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0)
@@ -55,6 +51,17 @@ void cliente(char *argv){
 }
 
 int main (int argc, char *argv[]){
+	// if(argc<3){
+	// 	fprintf(stderr, "usage %s hostnameport\n", argv[0]);
+	// 	exit(0);
+	// }
+
+	if(argc<2){
+		fprintf(stderr, "usage %s hostnameport\n", argv[0]);
+		exit(0);
+	}
+
 	cliente(argv[1]);
+	
 	return 0;
 }

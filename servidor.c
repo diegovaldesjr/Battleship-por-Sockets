@@ -18,11 +18,6 @@ void servidor(){
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
 	
-	if(argc<2){
-		fprintf(stderr,"ERROR, no port provided\n");
-		exit(1);
-	}
-	
 	//el primer parametro es la familia del protocolo. el segundo indica que es un socket tcp
 	//Crear sockets, el 0 es parametro de control
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -67,6 +62,11 @@ void servidor(){
 }
 
 int main (int argc, char *argv[]){
+
+	// if(argc<2){
+	// 	fprintf(stderr,"ERROR, no port provided\n");
+	// 	exit(1);
+	// }
 
 	servidor();	
 	return 0;
