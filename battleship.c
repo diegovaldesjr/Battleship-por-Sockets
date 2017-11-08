@@ -342,11 +342,14 @@ int main() {
 int i=0; 
 mensaje msg = {'I',0,0,'I'};
    while(i==0){
+
         msg=player1(msg);
         if(msg.msg=='W'){
             i++;
             break;
         }
+
+        
         msg=player2(msg);
         if(msg.msg=='W'){
             i--;

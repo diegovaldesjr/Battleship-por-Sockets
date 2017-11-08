@@ -16,31 +16,269 @@ void error(const char *msg){
 	exit(0);
 }
 
-void escribirServidor(){
+void escribirServidor(char serializado[4]){
 	int n;
-	char buffer[256];
 
-	printf("Please enter the message: ");
-	bzero(buffer, 256);
-	fgets(buffer, 255, stdin);
-	n = write(sockfd, buffer, strlen(buffer));
+	n = write(sockfd, serializado, sizeof(serializado));
 	if(n<0)
 		error("ERROR writing to socket");
+	printf("Jugada enviada.\n");
 }
 
-void leerServidor(){
+void leerServidor(char serializado[4]){
 	int n;
-	char buffer[256];
 
-	bzero(buffer, 256);
-	n = read(sockfd, buffer, 255);
+	n = read(sockfd, serializado, sizeof(serializado));
 	if(n<0)
 		error("ERROR readign from socket");
-	printf("%s\n", buffer);
+	printf("Jugada recibida\n");
 }
 
 void cerrarCliente(){
 	close(sockfd);
+}
+
+/*Funciones del juego*/
+struct Mensaje {
+  char msg;
+  int fila;
+  int columna;
+  char simbolo;
+};
+
+typedef struct Mensaje mensaje;
+
+//W:Ganaste, I:Inicia tu tablero, L:Listo, G: Golpe, O: Acertaste, F: Fallaste, T: Tu turno
+mensaje deserializar (mensaje estructura, char serializado[4]){
+    estructura.msg = serializado[0];
+    estructura.fila = (int)(serializado[1] - '0');
+    estructura.columna = (int)(serializado[2] - '0');
+    estructura.simbolo = serializado[3];
+    return estructura;
+}
+
+void serializar (mensaje estructura , char serializado[4]){
+  char s;
+    serializado[0]=estructura.msg;
+    s = '0' + estructura.fila;
+    serializado[1] = s;
+    s = '0' + estructura.columna;
+    serializado[2] = s;
+    serializado[3] = estructura.simbolo;
+    return;
+    
+} 
+
+int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][10]){
+    int i,j;
+    int barco;
+    
+    
+    if(sentido>4 || fila>9 || columna>9 || fila<0 || columna<0)
+        return -2;
+    
+    switch (fragata){
+        case 1: barco = 5; break;
+        case 2: barco = 4; break;
+        case 3: barco = 3; break; 
+        case 4: barco = 3; break; 
+        case 5: barco = 2; break; 
+    }
+    switch (sentido){
+        case 1:
+            if (columna-barco < -1 ){
+                return -1;
+            }else{
+                for(i=columna;i!=columna-barco;i--){
+                    if(matriz[fila][i] != '*')
+                        return -1;
+                }
+            }
+            return 0;
+            
+        case 2:
+            if (fila-barco < -1){
+                int h=fila-barco;
+                printf("Esto  es el resultado %d\n",h);
+                return -1;
+            }else{
+                for(i=fila;i!=fila-barco;i--){
+                    if(matriz[i][columna] != '*')
+                        return -1;
+                }
+            }
+            return 0;
+        case 3: 
+            if(columna+barco> 10 ){ 
+                int g =fila+barco;
+                printf("Este es el resultado de la derecha: %d\n",g);
+                return -1;
+            }else{
+                for(i=columna;i!=columna+barco;i++){
+                    if(matriz[fila][i] != '*')
+                        return -1;
+                }
+            }
+            return 0;
+        case 4:
+            if (fila+barco > 10){
+                int f =fila+barco;
+                printf("Este es el resultado de abajo: %d\n",f);
+                return -1;
+            }else{
+                for(i=fila;i!=fila+barco;i++){
+                    if(matriz[i][columna] != '*'){
+                        return -1;
+                    }        
+                }
+            }
+            return 0;
+    } 
+   
+    
+}
+
+int colocar (int fila, int columna,int sentido,int fragata,char matriz [10][10]){
+    int i,j;
+    int barco;
+    char simbolo;
+    switch (fragata){
+        
+        case 1: barco = 5; simbolo='P'; break;
+        case 2: barco = 4; simbolo='A'; break;
+        case 3: barco = 3; simbolo='C'; break; 
+        case 4: barco = 3; simbolo='S'; break; 
+        case 5: barco = 2; simbolo='D'; break;
+       
+        
+    }
+    switch (sentido){
+        case 1:
+                for(i=columna;i!=columna-barco;i--){
+                    matriz[fila][i] = simbolo;
+                }
+                break;
+        case 2:
+                for(i=fila;i!=fila-barco;i--){
+                    matriz[i][columna]= simbolo;
+                }
+                break;
+        case 3: 
+                for(i=columna;i!=columna+barco;i++){
+                    matriz[fila][i] = simbolo;
+                }
+                break;
+            
+        case 4:
+                for(i=fila;i!=fila+barco;i++){
+                    matriz[i][columna] = simbolo;
+                    
+                }
+                break;
+    }
+    
+    for(i=0;i<10;i++){
+        for(j=0;j<10;j++){
+            printf("%c",matriz[i][j]);
+            printf(" ");
+        }
+    printf("\n");
+    }
+    
+}
+
+int creador (char matriz[10][10]){
+  int i,fila,columna,sentido;
+  
+
+  for (i=1;i<=6;i++){
+    switch(i){
+        case 1: printf("Inserta el portaaviones (5 casillas de largo)\n"); break;
+        case 2: printf("Inserta el acorazado (4 casillas de largo)\n"); break;
+        case 3: printf("Inserta el crucero (3 casillas de largo)\n"); break;
+        case 4: printf("Inserta el submarino (3 casillas de largo)\n"); break;
+        case 5: printf("Inserta el destructor (2 casillas de largo)\n"); break;
+    }
+   
+    if(i==6)
+        return 0;
+    
+    printf("fila:");
+    scanf("%d",&fila); 
+    printf("columnas:");
+    scanf("%d",&columna);
+    printf("Fija la direccion\n"); 
+    printf("1. Izquierda\n");
+    printf("2. Arriba\n");
+    printf("3.Derecha\n");
+    printf("4.Abajo\n"); 
+    scanf("%d",&sentido);
+   
+    
+    if (comprobador(fila-1,columna-1,sentido,i,matriz)==-1){
+        printf("Tu barco sobrepone a otro o se sale de los limites del tablero vuelve a intentarlo\n");
+        i--;
+    }
+    if (comprobador(fila-1,columna-1,sentido,i,matriz)==-2){
+        printf("Tuviste un error de tipeo en alguna fila, columna o sentido ¡vuelve a intentarlo!\n");
+        i--;
+    }
+    if(comprobador(fila-1,columna-1,sentido,i,matriz)==0){
+        colocar(fila-1,columna-1,sentido,i,matriz);
+    }
+  }
+}
+
+mensaje player2(mensaje estructura){
+    static char tablero[10][10]; 
+    static char acertados[10][10];
+    int  jugada[2];
+    int fila,columna,sentido,i;
+  
+    
+    
+    if(estructura.msg == 'L'){
+        for(fila=0;fila<=9; fila++){
+            for(columna=0; columna<=9;columna++){
+                tablero[fila][columna] = '*';
+                acertados[fila][columna]= '*';
+        
+            }
+        }
+       creador(tablero);
+       estructura.msg = 'L';
+       return estructura;
+    }
+   
+    if(estructura.msg == 'T'){
+        printf("\n");
+        printf("Tu turno jugador 2 \n");
+        enviarJugada(acertados,jugada);
+        estructura.fila=jugada[0];
+        estructura.columna=jugada[1];
+        estructura.msg='G';
+        return estructura;
+    }
+    if(estructura.msg == 'G'){
+        estructura=recibirJugada(estructura,tablero); 
+        return estructura;
+    }
+    if(estructura.msg == 'O'){
+        acertados[estructura.fila][estructura.columna] = estructura.simbolo;
+        printf("¡Acertaste!");
+        if(i==-1){
+            estructura.msg='W';
+            printf("El jugador 2 gano la partida!");
+            return estructura;
+            
+        }
+    }
+    if(estructura.msg == 'F'){
+        acertados[estructura.fila][estructura.columna] = 'X';
+        printf("¡Fallaste!\n");
+    }
+    estructura.msg = 'T';
+    return estructura;
 }
 
 int main (int argc, char *argv[]){
@@ -67,9 +305,29 @@ int main (int argc, char *argv[]){
 	if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) <0)
 		error("ERROR connecting");
 
-	while(1){
-		escribirServidor():
-		leerServidor();
+	printf("Conectado con player 1.\n");
+
+	int ganador=0; 
+	char serial[4];
+	mensaje msg;
+
+	while(ganador==0){
+		leerServidor(serial);
+		msg=deserializar(msg, serial);
+
+		if(msg.msg=='W'){
+	        ganador--;
+	        break;
+	    }
+
+	    msg=player2(msg);
+	    serializar(msg,serial);
+	    enviarJugada(serial);
 	}
+
+	if(i<0)
+	    printf("el jugador 2 gano\n");
+	if(i>0)
+	    printf("El jugador 1 gano\n");
 	return 0;
 }
