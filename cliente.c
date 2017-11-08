@@ -326,12 +326,6 @@ mensaje player2(mensaje estructura){
     }
     estructura.msg = 'T';
     return estructura;
-    /* PERDEDOR */
-    if(estructura.msg == 'W'){
-        printf("Perdiste!");
-        estructura.msg='P';
-        return estructura;
-    }
 }
 
 int main (int argc, char *argv[]){
@@ -371,24 +365,25 @@ int main (int argc, char *argv[]){
 		if(msg.msg=='W'){
 	        ganador++;
 	        break;
-	    }else if(msg.msg=='P'){
+	    }
+
+	    msg=player2(msg);
+
+        if(msg.msg=='W'){
             ganador--;
+            serializar(msg,serial);
+            escribirCliente(serial);
             break;
         }
 
-	    msg=player2(msg);
 	    serializar(msg,serial);
 	    escribirServidor(serial);
 	}
 
 	if(ganador<0)
 	    printf("el jugador 2 gano\n");
-	if(ganador>0){
-        msg=player2(msg);
-        serializar(msg,serial);
-        escribirServidor(serial);
+	if(ganador>0)
 	    printf("El jugador 1 gano\n");
-    }
 
     cerrarCliente();
 	return 0;
