@@ -372,7 +372,7 @@ int main (int argc, char *argv[]){
 	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 		error("ERROR on binding");
 	
-	listen(sockfd, 5);
+	listen(sockfd, 1);
 
 	conectarCliente();
 
@@ -392,9 +392,6 @@ int main (int argc, char *argv[]){
 
 		if(msg.msg=='W'){
 	        ganador--;
-	        msg=player1(msg);
-			serializar(msg,serial);
-			escribirCliente(serial);
 	        break;
 	    }else if(msg.msg=='P'){
 	    	ganador++;
@@ -402,10 +399,15 @@ int main (int argc, char *argv[]){
 	    }
 	}
 
-	if(ganador<0)
+	if(ganador<0){
+		msg=player1(msg);
+		serializar(msg,serial);
+		escribirCliente(serial);
 	    printf("el jugador 2 gano\n");
+	}
 	if(ganador>0)
 	    printf("El jugador 1 gano\n");
 	
+	cerrarServidor();
 	return 0;
 }

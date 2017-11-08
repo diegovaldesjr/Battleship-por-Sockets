@@ -370,9 +370,6 @@ int main (int argc, char *argv[]){
 
 		if(msg.msg=='W'){
 	        ganador++;
-            msg=player2(msg);
-            serializar(msg,serial);
-            escribirServidor(serial);
 	        break;
 	    }else if(msg.msg=='P'){
             ganador--;
@@ -386,7 +383,13 @@ int main (int argc, char *argv[]){
 
 	if(ganador<0)
 	    printf("el jugador 2 gano\n");
-	if(ganador>0)
+	if(ganador>0){
+        msg=player2(msg);
+        serializar(msg,serial);
+        escribirServidor(serial);
 	    printf("El jugador 1 gano\n");
+    }
+
+    cerrarCliente();
 	return 0;
 }
