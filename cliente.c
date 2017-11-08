@@ -368,14 +368,6 @@ int main (int argc, char *argv[]){
 	    }
 
 	    msg=player2(msg);
-
-        if(msg.msg=='W'){
-            ganador--;
-            serializar(msg,serial);
-            escribirCliente(serial);
-            break;
-        }
-
 	    serializar(msg,serial);
 	    escribirServidor(serial);
 	}
