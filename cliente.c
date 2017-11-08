@@ -7,23 +7,53 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+int sockfd, portno, n;
+struct sockaddr_in serv_addr;
+struct hostent *server;
+
 void error(const char *msg){
 	perror(msg);
 	exit(0);
 }
 
-void cliente(char *argv){
-	int sockfd, portno=8000, n;
-	struct sockaddr_in serv_addr;
-	struct hostent *server;
-	
+void escribirServidor(){
+	int n;
 	char buffer[256];
+
+	printf("Please enter the message: ");
+	bzero(buffer, 256);
+	fgets(buffer, 255, stdin);
+	n = write(sockfd, buffer, strlen(buffer));
+	if(n<0)
+		error("ERROR writing to socket");
+}
+
+void leerServidor(){
+	int n;
+	char buffer[256];
+
+	bzero(buffer, 256);
+	n = read(sockfd, buffer, 255);
+	if(n<0)
+		error("ERROR readign from socket");
+	printf("%s\n", buffer);
+}
+
+void cerrarCliente(){
+	close(sockfd);
+}
+
+int main (int argc, char *argv[]){
 	
-	//portno = atoi(argv[2]);
+	if(argc<3){
+		fprintf(stderr, "usage %s hostnameport\n", argv[0]);
+		exit(0);
+	}
+	portno = atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0)
 		error("ERROR opening socket");
-	server = gethostbyname(argv);
+	server = gethostbyname(argv[1]);
 	if(server == NULL){
 		fprintf(stderr, "ERROR, no such host\n");
 		exit(0);
@@ -36,32 +66,10 @@ void cliente(char *argv){
 	serv_addr.sin_port = htons(portno);
 	if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) <0)
 		error("ERROR connecting");
-	printf("Please enter the message: ");
-	bzero(buffer, 256);
-	fgets(buffer, 255, stdin);
-	n = write(sockfd, buffer, strlen(buffer));
-	if(n<0)
-		error("ERROR writing to socket");
-	bzero(buffer, 256);
-	n = read(sockfd, buffer, 255);
-	if(n<0)
-		error("ERROR readign from socket");
-	printf("%s\n", buffer);
-	close(sockfd);
-}
 
-int main (int argc, char *argv[]){
-	// if(argc<3){
-	// 	fprintf(stderr, "usage %s hostnameport\n", argv[0]);
-	// 	exit(0);
-	// }
-
-	if(argc<2){
-		fprintf(stderr, "usage %s hostnameport\n", argv[0]);
-		exit(0);
+	while(1){
+		escribirServidor():
+		leerServidor();
 	}
-
-	cliente(argv[1]);
-	
 	return 0;
 }
