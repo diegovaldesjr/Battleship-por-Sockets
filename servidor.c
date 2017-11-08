@@ -300,6 +300,54 @@ mensaje player1(mensaje estructura){
     return estructura;
 }
 
+int verificarGanador(char jugadas[10][10]){
+    int i,j,total;
+    for(i=0;i<=9;i++){
+        for(j=0;j<=9;j++){
+            if(jugadas[i][j] != 'X' && jugadas[i][j] != '*' )
+            total++;
+        }
+    }
+    if(total==17){
+        return -1;
+    }
+    
+return 0;
+}
+
+mensaje recibirJugada(mensaje estructura,char tablero[10][10]){
+    if(tablero[estructura.fila][estructura.columna] != '*' && estructura.fila<=9 && estructura.columna<=9 &&estructura.fila>=0 && estructura.columna>0){
+        estructura.simbolo=tablero[estructura.fila][estructura.columna];
+        estructura.msg = 'O';
+        return estructura;
+    }else 
+    {
+        estructura.msg = 'F';
+        return estructura;
+    }
+    
+}
+
+
+void enviarJugada(char acertados[10][10], int jugada[2]){
+    int i,j,fila,columna;
+ 
+    printf("Tiros acertados\n");
+    for(fila=0;fila<=9; fila++){
+            for(columna=0; columna<=9;columna++){
+                printf("%c",acertados[fila][columna]);
+            }    
+    printf("\n");
+    }
+    printf("\n");
+    printf("Inserte la fila a disparar: ");
+    scanf("%d",&i);
+    jugada[0]=i-1;
+    printf("Inserte la columna a disparar: ");
+    scanf("%d",&j);
+    jugada[1]=j-1;
+}
+
 int main (int argc, char *argv[]){
 	
 	if(argc<2){
@@ -344,21 +392,9 @@ int main (int argc, char *argv[]){
 	    }
 	}
 
-	// while(ganador==0){
-	//     msg=player1(msg);
-	//     if(msg.msg=='W'){
-	//         ganador++;
-	//         break;
-	//     }
-	//     msg=player2(msg);
-	//     if(msg.msg=='W'){
-	//         ganador--;
-	//         break;
-	//     }
-	// }
-	if(i<0)
+	if(ganador<0)
 	    printf("el jugador 2 gano\n");
-	if(i>0)
+	if(ganador>0)
 	    printf("El jugador 1 gano\n");
 	
 	return 0;
