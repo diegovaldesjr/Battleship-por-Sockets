@@ -396,7 +396,7 @@ int main (int argc, char *argv[]){
 			serializar(msg,serial);
 			escribirCliente(serial);
 	        break;
-	    }else(msg.msg=='P'){
+	    }else if(msg.msg=='P'){
 	    	ganador++;
 	    	break;
 	    }
