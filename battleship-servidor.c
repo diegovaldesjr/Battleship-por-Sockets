@@ -7,61 +7,87 @@
 #include <netinet/in.h>
 
 //Variables del servidor
-int sockfd, portno;	
-struct sockaddr_in serv_addr;
+int socketServidor, portno;	
+struct sockaddr_in servidor_addr;
 
 //Variables de cliente a conectar
-int newsockfd;
-socklen_t clilen;
-struct sockaddr_in cli_addr;
+int socketCliente;
+socklen_t cliente_len;
+struct sockaddr_in cliente_addr;
 
+/**
+*	En caso de error al conectar
+*
+*/
 void error(const char *msg){
 	perror(msg);
 	exit(1);
 }
 
+/**
+*	Crea socket para comunicar con el cliente
+*
+*/
 void conectarCliente(){
-	clilen = sizeof(cli_addr);
-	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-	if(newsockfd < 0)
+	cliente_len = sizeof(cliente_addr);
+	socketCliente = accept(socketServidor, (struct sockaddr *) &cliente_addr, &cliente_len);
+	if(socketCliente < 0)
 		error("ERROR on accept");
 	printf("Player 2 conectado.\n");
 }
 
+/**
+*	Manda mensaje a cliente (arreglo de caracteres serializado)
+*
+*/
 void escribirCliente(char serializado[4]){
 	int n;
-	n = write(newsockfd, serializado, sizeof(serializado));
+	n = write(socketCliente, serializado, sizeof(serializado));
 	if(n < 0)
 		error("ERROR writing to socket");
 	printf("Jugada enviada.\n");
 }
 
+/**
+*	Recibe mensaje del cliente (arreglo de caracteres serializado)
+*
+*/
 void leerCliente(char serializado[4]){
 	int n;
 
-	n = read(newsockfd, serializado, sizeof(serializado));
+	n = read(socketCliente, serializado, sizeof(serializado));
 	//Error en la lectura
 	if(n<0)
 		error("ERROR reading from socket");
 	printf("Jugada recibida\n");
 }
 
+/**
+*	Cierra conexion con cliente y el servidor
+*
+*/
 void cerrarServidor(){
-	close(newsockfd);
-	close(sockfd);
+	close(socketCliente);
+	close(socketServidor);
 }
 
-/*Funciones del juego*/
+/***Funciones del juego***/
+
+/**
+*	Estructura que contiene el mensaje, resultado o accion de cada jugada hecha por el jugador
+*/
 struct Mensaje {
   char msg;
   int fila;
   int columna;
   char simbolo;
 };
-
 typedef struct Mensaje mensaje;
 
-//W:Ganaste, I:Inicia tu tablero, L:Listo, G: Golpe, O: Acertaste, F: Fallaste, T: Tu turno
+/**
+*	Deseariliza pasando el arreglo de caracteres a la estructura
+*
+*/
 mensaje deserializar (mensaje estructura, char serializado[4]){
     estructura.msg = serializado[0];
     estructura.fila = (int)(serializado[1] - '0');
@@ -70,6 +96,10 @@ mensaje deserializar (mensaje estructura, char serializado[4]){
     return estructura;
 }
 
+/**
+*	Serializa pasando la estructura un arreglo de caracteres 
+*
+*/
 void serializar (mensaje estructura , char serializado[4]){
   char s;
     serializado[0]=estructura.msg;
@@ -82,6 +112,10 @@ void serializar (mensaje estructura , char serializado[4]){
     
 } 
 
+/**
+*	Verifica que tu matriz de acertados tenga los 17 tiros acertados (necesarios para ganar la partida)
+*
+*/
 int verificarGanador(char jugadas[10][10]){
     int i,j,total;
     for(i=0;i<=9;i++){
@@ -97,6 +131,10 @@ int verificarGanador(char jugadas[10][10]){
 return 0;
 }
 
+/**
+*	Verifica si el tiro/jugada pego a un barco del rival
+*
+*/
 mensaje recibirJugada(mensaje estructura,char tablero[10][10]){
     if(tablero[estructura.fila][estructura.columna] != '*' && estructura.fila<=9 && estructura.columna<=9 &&estructura.fila>=0 && estructura.columna>=0){
         estructura.simbolo=tablero[estructura.fila][estructura.columna];
@@ -110,6 +148,11 @@ mensaje recibirJugada(mensaje estructura,char tablero[10][10]){
     
 }
 
+/**
+*	Solicita coordenadas en donde se realizara el disparo/jugada, 
+*	y muestra graficamente los tiros acertados
+*
+*/
 void enviarJugada(char acertados[10][10], int jugada[2]){
     int i,j,fila,columna;
  
@@ -129,6 +172,11 @@ void enviarJugada(char acertados[10][10], int jugada[2]){
     jugada[1]=j-1;
 }
 
+/**
+*	Verifica que la no esta sobreponiendo un barco sobre otro 
+*	y que no se coloca un barco fuera de los limites
+*
+*/
 int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][10]){
     int i,j;
     int barco;
@@ -159,7 +207,6 @@ int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][1
         case 2:
             if (fila-barco < -1){
                 int h=fila-barco;
-                printf("Esto  es el resultado %d\n",h);
                 return -1;
             }else{
                 for(i=fila;i!=fila-barco;i--){
@@ -171,7 +218,6 @@ int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][1
         case 3: 
             if(columna+barco> 10 ){ 
                 int g =fila+barco;
-                printf("Este es el resultado de la derecha: %d\n",g);
                 return -1;
             }else{
                 for(i=columna;i!=columna+barco;i++){
@@ -183,7 +229,6 @@ int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][1
         case 4:
             if (fila+barco > 10){
                 int f =fila+barco;
-                printf("Este es el resultado de abajo: %d\n",f);
                 return -1;
             }else{
                 for(i=fila;i!=fila+barco;i++){
@@ -198,6 +243,10 @@ int comprobador(int fila, int columna,int sentido,int fragata,char matriz [10][1
     
 }
 
+/**
+*	Coloca el barco en el tablero
+*
+*/
 int colocar (int fila, int columna,int sentido,int fragata,char matriz [10][10]){
     int i,j;
     int barco;
@@ -247,6 +296,11 @@ int colocar (int fila, int columna,int sentido,int fragata,char matriz [10][10])
     
 }
 
+/**
+*	Gestiona la creacion del tablero
+*	apoyandose con la funcion comprobador() y colocar()
+*
+*/
 int creador (char matriz[10][10]){
   int i,fila,columna,sentido;
   
@@ -289,6 +343,14 @@ int creador (char matriz[10][10]){
   }
 }
 
+/**
+*	Es la que gestiona todo el juego, tanto la creacion del tablero
+*	verificar las jugadas hechas y finalizacion del juego
+*	
+*	Mensajes:
+*	W:Ganaste, I:Inicia tu tablero, L:Listo, G: Golpe, O: Acertaste, F: Fallaste, T: Tu turno
+*
+*/
 mensaje player1(mensaje estructura){
     static char tablero[10][10]; 
     static char acertados[10][10];
@@ -308,18 +370,13 @@ mensaje player1(mensaje estructura){
         creador(tablero);
         estructura.msg = 'L';
         return estructura;
-     
-        
-    }
-    if(estructura.msg == 'L'){
+    }else if(estructura.msg == 'L'){
         estructura.msg = 'T';
         return estructura;
-    }
-    if(estructura.msg == 'G'){
+    }else if(estructura.msg == 'G'){
         estructura=recibirJugada(estructura,tablero); 
         return estructura;
-    }
-    if(estructura.msg == 'T'){
+    }else if(estructura.msg == 'T'){
         printf("\n");
         printf("Tu turno jugador 1 \n");
         enviarJugada(acertados,jugada);
@@ -327,9 +384,7 @@ mensaje player1(mensaje estructura){
         estructura.columna=jugada[1];
         estructura.msg='G';
         return estructura;
-    }
-    
-    if(estructura.msg == 'O'){
+    }else if(estructura.msg == 'O'){
         acertados[estructura.fila][estructura.columna] = estructura.simbolo;
         printf("¡Acertaste!\n");
         i=verificarGanador(acertados);
@@ -338,14 +393,10 @@ mensaje player1(mensaje estructura){
             printf("El jugador 1 gano la partida!");
             return estructura;
         }    
-    }
-
-    if(estructura.msg == 'F'){
+    }else if(estructura.msg == 'F'){
         acertados[estructura.fila][estructura.columna] = 'X';
         printf("¡Fallaste!\n");
-    }
-    
-    if(estructura.msg=='W'){
+    }else if(estructura.msg=='W'){
     	estructura.msg='P';
     	return estructura;
     }
@@ -354,35 +405,43 @@ mensaje player1(mensaje estructura){
     return estructura;
 }
 
+/**
+*	Funcion main, prende el servidor, espera al jugador e inicia el juego
+*
+*/
 int main (int argc, char *argv[]){
 	
-	if(argc<2){
-		fprintf(stderr,"ERROR, no port provided\n");
-		exit(1);
-	}
-	
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd <0)	//Si 
-		error("ERROR opening socket");
-	bzero((char *) &serv_addr, sizeof(serv_addr));
-	portno = atoi(argv[1]);
-	
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);	
+	printf("Bienvenidos a Battleship (version servidor/cliente)\n");
 
-	if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+    printf("Ingrese numero de puerto.\n");
+    scanf("%d", portno);
+	
+	//Inicia el servidor
+	socketServidor = socket(AF_INET, SOCK_STREAM, 0);
+	if(socketServidor <0)	//Si 
+		error("ERROR opening socket");
+	bzero((char *) &servidor_addr, sizeof(servidor_addr));
+	
+	servidor_addr.sin_family = AF_INET;
+	servidor_addr.sin_addr.s_addr = INADDR_ANY;
+	servidor_addr.sin_port = htons(portno);	
+
+	if(bind(socketServidor, (struct sockaddr *) &servidor_addr, sizeof(servidor_addr)) < 0)
 		error("ERROR on binding");
 	
-	listen(sockfd, 5);
+	listen(socketServidor, 5);
 
+	//Espera cliente, al recibir la peticion se conecta
 	conectarCliente();
 
+
+	//Variables para empezar el juego
 	int ganador=0; 
 	char serial[4];
 	
 	mensaje msg = {'I',0,0,'I'};
 
+	//Este ciclo dura mientras el juego se lleve a cabo
 	while(ganador==0){
 		msg=player1(msg);
 		serializar(msg,serial);
@@ -394,22 +453,22 @@ int main (int argc, char *argv[]){
 		if(msg.msg=='W'){
 	        ganador--;
 	        break;
-	    }
-		if(msg.msg=='P'){
+	    }else if(msg.msg=='P'){
 			ganador++;
 			break;
 		}
 	}
 
+	//Verifica ganador y termina el juego
 	if(ganador<0){
 		msg=player1(msg);
 		serializar(msg,serial);
 		escribirCliente(serial);
 	    printf("el jugador 2 gano\n");
-	}
-	if(ganador>0)
+	}else if(ganador>0)
 	    printf("El jugador 1 gano\n");
 	
+	//Cierra conexiones
 	cerrarServidor();
 	return 0;
 }
