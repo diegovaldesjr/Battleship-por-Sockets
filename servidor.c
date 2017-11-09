@@ -339,10 +339,17 @@ mensaje player1(mensaje estructura){
             return estructura;
         }    
     }
+
     if(estructura.msg == 'F'){
         acertados[estructura.fila][estructura.columna] = 'X';
         printf("¡Fallaste!\n");
     }
+    
+    if(estructura.msg=='W'){
+    	estructura.msg='P';
+    	return estructura;
+    }
+
     estructura.msg = 'T';    
     return estructura;
 }
@@ -384,15 +391,22 @@ int main (int argc, char *argv[]){
 		leerCliente(serial);
 		msg=deserializar(msg, serial);
 
-
 		if(msg.msg=='W'){
 	        ganador--;
 	        break;
 	    }
+		if(msg.msg=='P'){
+			ganador++;
+			break;
+		}
 	}
 
-	if(ganador<0)
+	if(ganador<0){
+		msg=player1(msg);
+		serializar(msg,serial);
+		escribirCliente(serial);
 	    printf("el jugador 2 gano\n");
+	}
 	if(ganador>0)
 	    printf("El jugador 1 gano\n");
 	

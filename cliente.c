@@ -283,7 +283,6 @@ mensaje player2(mensaje estructura){
     int fila,columna,sentido,i;
   
     
-    
     if(estructura.msg == 'L'){
         for(fila=0;fila<=9; fila++){
             for(columna=0; columna<=9;columna++){
@@ -313,6 +312,7 @@ mensaje player2(mensaje estructura){
     if(estructura.msg == 'O'){
         acertados[estructura.fila][estructura.columna] = estructura.simbolo;
         printf("¡Acertaste!");
+        i=verificarGanador(acertados);
         if(i==-1){
             estructura.msg='W';
             printf("El jugador 2 gano la partida!");
@@ -324,6 +324,12 @@ mensaje player2(mensaje estructura){
         acertados[estructura.fila][estructura.columna] = 'X';
         printf("¡Fallaste!\n");
     }
+
+    if(estructura.msg == 'W'){
+       estructura.msg='P';
+       return estructura;
+    }
+
     estructura.msg = 'T';
     return estructura;
 }
@@ -366,16 +372,24 @@ int main (int argc, char *argv[]){
 	        ganador++;
 	        break;
 	    }
+	    if(msg.msg == 'P'){
+            ganador--;
+            break
+        }
 
-	    msg=player2(msg);
-	    serializar(msg,serial);
-	    escribirServidor(serial);
+        msg=player2(msg);
+        serializar(msg,serial);
+        escribirServidor(serial);
 	}
 
 	if(ganador<0)
 	    printf("el jugador 2 gano\n");
-	if(ganador>0)
-	    printf("El jugador 1 gano\n");
+	if(ganador>0){
+	    msg=player2(msg);
+        serializar(msg,serial);
+        escribirServidor(serial);
+        printf("El jugador 1 gano\n");
+    }
 
     cerrarCliente();
 	return 0;
