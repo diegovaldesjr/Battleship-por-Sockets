@@ -8,7 +8,7 @@
 #include <netdb.h>
 
 //Variables del socket a conectar con el servidor
-int socket, portno, n;
+int socketCliente, portno, n;
 char dirIP[18];
 struct sockaddr_in servidor_addr;
 struct hostent *server;
@@ -18,8 +18,8 @@ struct hostent *server;
 *
 */
 void error(const char *msg){
-	perror(msg);
-	exit(0);
+    perror(msg);
+    exit(0);
 }
 
 /**
@@ -27,12 +27,12 @@ void error(const char *msg){
 *
 */
 void escribirServidor(char serializado[4]){
-	int n;
+    int n;
 
-	n = write(socket, serializado, sizeof(serializado));
-	if(n<0)
-		error("ERROR writing to socket");
-	printf("Jugada enviada.\n");
+    n = write(socketCliente, serializado, sizeof(serializado));
+    if(n<0)
+        error("ERROR writing to socket");
+    printf("Jugada enviada.\n");
 }
 
 /**
@@ -40,12 +40,12 @@ void escribirServidor(char serializado[4]){
 *
 */
 void leerServidor(char serializado[4]){
-	int n;
+    int n;
 
-	n = read(socket, serializado, sizeof(serializado));
-	if(n<0)
-		error("ERROR readign from socket");
-	printf("Jugada recibida\n");
+    n = read(socketCliente, serializado, sizeof(serializado));
+    if(n<0)
+        error("ERROR readign from socket");
+    printf("Jugada recibida\n");
 }
 
 /**
@@ -53,7 +53,7 @@ void leerServidor(char serializado[4]){
 *
 */
 void cerrarCliente(){
-	close(socket);
+    close(socketCliente);
 }
 
 /***Funciones del juego***/
@@ -392,50 +392,50 @@ mensaje player2(mensaje estructura){
 *
 */
 int main (int argc, char *argv[]){
-	
+    
     printf("Bienvenidos a Battleship (version cliente)\n");
 
     printf("Ingrese direccion ip del servidor.\n");
     scanf("%s", dirIP);
 
     printf("Ingrese numero de puerto.\n");
-    scanf("%d", portno);
+    scanf("%d", &portno);
 
     //Crea socket para conectar con cliente y realiza la conexion
-    socket = socket(AF_INET, SOCK_STREAM, 0);
-	if(socket < 0)
-		error("ERROR opening socket");
-	server = gethostbyname(dirIP);
-	if(server == NULL){
-		fprintf(stderr, "ERROR, no such host\n");
-		exit(0);
-	}
-	bzero((char *) &servidor_addr, sizeof(servidor_addr));
-	servidor_addr.sin_family = AF_INET;
-	
-	bcopy((char *)server->h_addr, (char *)&servidor_addr.sin_addr.s_addr, server->h_length);
-	
-	servidor_addr.sin_port = htons(portno);
-	if(connect(socket, (struct sockaddr *) &servidor_addr, sizeof(servidor_addr)) <0)
-		error("ERROR connecting");
+    socketCliente = socket(AF_INET, SOCK_STREAM, 0);
+    if(socketCliente < 0)
+        error("ERROR opening socket");
+    server = gethostbyname(dirIP);
+    if(server == NULL){
+        fprintf(stderr, "ERROR, no such host\n");
+        exit(0);
+    }
+    bzero((char *) &servidor_addr, sizeof(servidor_addr));
+    servidor_addr.sin_family = AF_INET;
+    
+    bcopy((char *)server->h_addr, (char *)&servidor_addr.sin_addr.s_addr, server->h_length);
+    
+    servidor_addr.sin_port = htons(portno);
+    if(connect(socketCliente, (struct sockaddr *) &servidor_addr, sizeof(servidor_addr)) <0)
+        error("ERROR connecting");
 
-	printf("Conectado con player 1.\n");
+    printf("Conectado con player 1.\n");
 
     //Variables para empezar el juego
-	int ganador=0; 
-	char serial[4];
-	mensaje msg;
+    int ganador=0; 
+    char serial[4];
+    mensaje msg;
 
     //Este ciclo dura mientras el juego se lleve a cabo
-	while(ganador==0){
-		leerServidor(serial);
-		msg=deserializar(msg, serial);
+    while(ganador==0){
+        leerServidor(serial);
+        msg=deserializar(msg, serial);
 
-		if(msg.msg=='W'){
-	        ganador++;
-	        break;
-	    }
-	    if(msg.msg == 'P'){
+        if(msg.msg=='W'){
+            ganador++;
+            break;
+        }
+        if(msg.msg == 'P'){
             ganador--;
             break;
         }
@@ -443,13 +443,13 @@ int main (int argc, char *argv[]){
         msg=player2(msg);
         serializar(msg,serial);
         escribirServidor(serial);
-	}
+    }
 
     //Verifica ganador y termina el juego
-	if(ganador<0)
-	    printf("el jugador 2 gano\n");
-	if(ganador>0){
-	    msg=player2(msg);
+    if(ganador<0)
+        printf("el jugador 2 gano\n");
+    if(ganador>0){
+        msg=player2(msg);
         serializar(msg,serial);
         escribirServidor(serial);
         printf("El jugador 1 gano\n");
@@ -457,5 +457,5 @@ int main (int argc, char *argv[]){
 
     //Cierra conexion con el servidor
     cerrarCliente();
-	return 0;
+    return 0;
 }
